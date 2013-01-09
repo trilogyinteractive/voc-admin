@@ -1,0 +1,15 @@
+<h1>All Users</h1>
+<div class="page-nav">
+	<%= link_to "New User", new_user_path, :class => "newlink", :remote => true %>
+</div>
+<%= flash_messages(flash) %>
+
+<%= render partial: 'users_table', locals: {users: @users} %>
+
+<%= paginate @users %>
+
+<div class="page-nav">
+	<%= link_to "New User", new_user_path, :class => "newlink", :remote => true %>
+</div>
+
+<div id="modalDiv" style="display: none;"></div>

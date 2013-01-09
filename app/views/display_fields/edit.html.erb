@@ -1,0 +1,11 @@
+<h1>Edit Display Field</h1>
+
+<% javascript 'display_field.js' %>
+
+<%= form_for [@survey, @survey_version, @display_field.becomes(DisplayField)] do |f| %>
+  <%= render :partial => 'form', :locals => {:f => f, :disabled => true} %>
+<% end %>
+
+<div class="align_cancel">
+	<%= link_to "Cancel", survey_survey_version_display_fields_path(@survey, @survey_version), :class=>"cancelLink" %>
+</div>

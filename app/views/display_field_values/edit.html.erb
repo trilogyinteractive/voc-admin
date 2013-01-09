@@ -1,0 +1,7 @@
+<div id="modalDiv">
+	<h2>Edit Display Field Value</h2>
+
+	<%= render :partial => "display_field_value_fields", :locals => {:survey => @survey, :version => @survey_version, :display_field_value => @display_field_value} %>
+
+	<div class="align_cancel"><%= link_to "Cancel", "#", :class => "simplemodal-close cancelLink" %></div>
+</div>

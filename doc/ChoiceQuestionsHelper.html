@@ -1,0 +1,676 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>
+  Module: ChoiceQuestionsHelper
+  
+    &mdash; Documentation by YARD 0.8.3
+  
+</title>
+
+  <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" charset="utf-8" />
+
+  <link rel="stylesheet" href="css/common.css" type="text/css" media="screen" charset="utf-8" />
+
+<script type="text/javascript" charset="utf-8">
+  hasFrames = window.top.frames.main ? true : false;
+  relpath = '';
+  framesUrl = "frames.html#!" + escape(window.location.href);
+</script>
+
+
+  <script type="text/javascript" charset="utf-8" src="js/jquery.js"></script>
+
+  <script type="text/javascript" charset="utf-8" src="js/app.js"></script>
+
+
+  </head>
+  <body>
+    <div id="header">
+      <div id="menu">
+  
+    <a href="_index.html">Index (C)</a> &raquo;
+    
+    
+    <span class="title">ChoiceQuestionsHelper</span>
+  
+
+  <div class="noframes"><span class="title">(</span><a href="." target="_top">no frames</a><span class="title">)</span></div>
+</div>
+
+      <div id="search">
+  
+    <a class="full_list_link" id="class_list_link"
+        href="class_list.html">
+      Class List
+    </a>
+  
+    <a class="full_list_link" id="method_list_link"
+        href="method_list.html">
+      Method List
+    </a>
+  
+    <a class="full_list_link" id="file_list_link"
+        href="file_list.html">
+      File List
+    </a>
+  
+</div>
+      <div class="clear"></div>
+    </div>
+
+    <iframe id="search_frame"></iframe>
+
+    <div id="content"><h1>Module: ChoiceQuestionsHelper
+  
+  
+  
+</h1>
+
+<dl class="box">
+  
+  
+    
+  
+    
+  
+  
+  
+    <dt class="r1 last">Defined in:</dt>
+    <dd class="r1 last">app/helpers/choice_questions_helper.rb</dd>
+  
+</dl>
+<div class="clear"></div>
+
+<h2>Overview</h2><div class="docstring">
+  <div class="discussion">
+    
+<p>View helpers for ChoiceQuestion functionality.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  
+<p class="tag_title">Author:</p>
+<ul class="author">
+  
+    <li>
+      
+      
+      
+      
+        
+        <div class='inline'>
+<p>Communication Training Analysis Corporation &lt;info@ctacorp.com&gt;</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div>
+
+
+
+
+
+
+  
+    <h2>
+      Instance Method Summary
+      <small>(<a href="#" class="summary_toggle">collapse</a>)</small>
+    </h2>
+
+    <ul class="summary">
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#answer_placement_visibility-instance_method" title="#answer_placement_visibility (instance method)">- (Object) <strong>answer_placement_visibility</strong>(f, choice_question) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Determines whether the Answer Placement option should be visible.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#auto_next_page_visibility-instance_method" title="#auto_next_page_visibility (instance method)">- (Object) <strong>auto_next_page_visibility</strong>(f, choice_question) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Determines whether the Auto Next Page option should be visible.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#initial_element_visibility-instance_method" title="#initial_element_visibility (instance method)">- (Object) <strong>initial_element_visibility</strong>(cond, choice_question, *answer_types) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Allows conditional visibility of an element based on choice_question.answer
+type, and/or some other arbitrary condition.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#options_for_answer_placement-instance_method" title="#options_for_answer_placement (instance method)">- (String) <strong>options_for_answer_placement</strong>(default) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Generates options for the ChoiceQuestion orientation dropdown.</p>
+</div></span>
+  
+</li>
+
+      
+        <li class="public ">
+  <span class="summary_signature">
+    
+      <a href="#options_for_answer_type-instance_method" title="#options_for_answer_type (instance method)">- (String) <strong>options_for_answer_type</strong>(default) </a>
+    
+
+    
+  </span>
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <span class="summary_desc"><div class='inline'>
+<p>Generates options for the ChoiceQuestion type dropdown.</p>
+</div></span>
+  
+</li>
+
+      
+    </ul>
+  
+
+
+
+  <div id="instance_method_details" class="method_details_list">
+    <h2>Instance Method Details</h2>
+
+    
+      <div class="method_details first">
+  <h3 class="signature first" id="answer_placement_visibility-instance_method">
+  
+    - (<tt>Object</tt>) <strong>answer_placement_visibility</strong>(f, choice_question) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Determines whether the Answer Placement option should be visible.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>f</span>
+      
+      
+        <span class='type'>(<tt>ActionView::Helpers::FormBuilder</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the FormBuilder from the view</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>choice_question</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ChoiceQuestion.html" title="ChoiceQuestion (class)">ChoiceQuestion</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the ChoiceQuestion to test against</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+34
+35
+36</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/helpers/choice_questions_helper.rb', line 34</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_answer_placement_visibility'>answer_placement_visibility</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='comma'>,</span> <span class='id identifier rubyid_choice_question'>choice_question</span><span class='rparen'>)</span>
+	<span class='kw'>return</span> <span class='id identifier rubyid_initial_element_visibility'>initial_element_visibility</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='period'>.</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_new_record?'>new_record?</span><span class='comma'>,</span> <span class='id identifier rubyid_choice_question'>choice_question</span><span class='comma'>,</span> <span class='const'>ChoiceAnswer</span><span class='op'>::</span><span class='const'>RADIO</span><span class='comma'>,</span> <span class='const'>ChoiceAnswer</span><span class='op'>::</span><span class='const'>CHECKBOX</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="auto_next_page_visibility-instance_method">
+  
+    - (<tt>Object</tt>) <strong>auto_next_page_visibility</strong>(f, choice_question) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Determines whether the Auto Next Page option should be visible.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>f</span>
+      
+      
+        <span class='type'>(<tt>ActionView::Helpers::FormBuilder</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the FormBuilder from the view</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>choice_question</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ChoiceQuestion.html" title="ChoiceQuestion (class)">ChoiceQuestion</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the ChoiceQuestion to test against</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+26
+27
+28</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/helpers/choice_questions_helper.rb', line 26</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_auto_next_page_visibility'>auto_next_page_visibility</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='comma'>,</span> <span class='id identifier rubyid_choice_question'>choice_question</span><span class='rparen'>)</span>
+	<span class='kw'>return</span> <span class='id identifier rubyid_initial_element_visibility'>initial_element_visibility</span><span class='lparen'>(</span><span class='id identifier rubyid_f'>f</span><span class='period'>.</span><span class='id identifier rubyid_object'>object</span><span class='period'>.</span><span class='id identifier rubyid_new_record?'>new_record?</span><span class='comma'>,</span> <span class='id identifier rubyid_choice_question'>choice_question</span><span class='comma'>,</span> <span class='const'>ChoiceAnswer</span><span class='op'>::</span><span class='const'>RADIO</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="initial_element_visibility-instance_method">
+  
+    - (<tt>Object</tt>) <strong>initial_element_visibility</strong>(cond, choice_question, *answer_types) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Allows conditional visibility of an element based on choice_question.answer
+type, and/or some other arbitrary condition.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>cond</span>
+      
+      
+        <span class='type'>(<tt>Boolean</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>evaluated boolean condition</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>choice_question</span>
+      
+      
+        <span class='type'>(<tt><span class='object_link'><a href="ChoiceQuestion.html" title="ChoiceQuestion (class)">ChoiceQuestion</a></span></tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>a ChoiceQuestion</p>
+</div>
+      
+    </li>
+  
+    <li>
+      
+        <span class='name'>answer_types</span>
+      
+      
+        <span class='type'>(<tt>Array&lt;Integer&gt;</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>matching ChoiceAnswer type ids</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+44
+45
+46</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/helpers/choice_questions_helper.rb', line 44</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_initial_element_visibility'>initial_element_visibility</span><span class='lparen'>(</span><span class='id identifier rubyid_cond'>cond</span><span class='comma'>,</span> <span class='id identifier rubyid_choice_question'>choice_question</span><span class='comma'>,</span> <span class='op'>*</span><span class='id identifier rubyid_answer_types'>answer_types</span><span class='rparen'>)</span>
+	<span class='kw'>return</span> <span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>style='display: none'</span><span class='tstring_end'>&quot;</span></span> <span class='kw'>unless</span> <span class='id identifier rubyid_cond'>cond</span> <span class='op'>||</span> <span class='id identifier rubyid_answer_types'>answer_types</span><span class='period'>.</span><span class='id identifier rubyid_include?'>include?</span><span class='lparen'>(</span><span class='id identifier rubyid_choice_question'>choice_question</span><span class='period'>.</span><span class='id identifier rubyid_answer_type'>answer_type</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="options_for_answer_placement-instance_method">
+  
+    - (<tt>String</tt>) <strong>options_for_answer_placement</strong>(default) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Generates options for the ChoiceQuestion orientation dropdown.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the id of the default selection.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>generated HTML option tags</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+18
+19
+20</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/helpers/choice_questions_helper.rb', line 18</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_options_for_answer_placement'>options_for_answer_placement</span><span class='lparen'>(</span><span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_options_for_select'>options_for_select</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>horizontal (side-by-side)</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='const'>ChoiceQuestion</span><span class='op'>::</span><span class='const'>HORIZONTAL_PLACEMENT</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>vertical (stacked)</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='const'>ChoiceQuestion</span><span class='op'>::</span><span class='const'>VERTICAL_PLACEMENT</span><span class='rbracket'>]</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='symbol'>:selected</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+      <div class="method_details ">
+  <h3 class="signature " id="options_for_answer_type-instance_method">
+  
+    - (<tt>String</tt>) <strong>options_for_answer_type</strong>(default) 
+  
+
+  
+
+  
+</h3><div class="docstring">
+  <div class="discussion">
+    
+<p>Generates options for the ChoiceQuestion type dropdown.</p>
+
+
+  </div>
+</div>
+<div class="tags">
+  <p class="tag_title">Parameters:</p>
+<ul class="param">
+  
+    <li>
+      
+        <span class='name'>default</span>
+      
+      
+        <span class='type'>(<tt>Integer</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>the id of the default selection.</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+<p class="tag_title">Returns:</p>
+<ul class="return">
+  
+    <li>
+      
+      
+        <span class='type'>(<tt>String</tt>)</span>
+      
+      
+      
+        &mdash;
+        <div class='inline'>
+<p>generated HTML option tags</p>
+</div>
+      
+    </li>
+  
+</ul>
+
+</div><table class="source_code">
+  <tr>
+    <td>
+      <pre class="lines">
+
+
+10
+11
+12</pre>
+    </td>
+    <td>
+      <pre class="code"><span class="info file"># File 'app/helpers/choice_questions_helper.rb', line 10</span>
+
+<span class='kw'>def</span> <span class='id identifier rubyid_options_for_answer_type'>options_for_answer_type</span><span class='lparen'>(</span><span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+  <span class='id identifier rubyid_options_for_select'>options_for_select</span><span class='lparen'>(</span><span class='lbracket'>[</span><span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Radio</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='const'>ChoiceAnswer</span><span class='op'>::</span><span class='const'>RADIO</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Dropdown</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='const'>ChoiceAnswer</span><span class='op'>::</span><span class='const'>DROPDOWN</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Multi-select</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='const'>ChoiceAnswer</span><span class='op'>::</span><span class='const'>MULTISELECT</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='lbracket'>[</span><span class='tstring'><span class='tstring_beg'>&quot;</span><span class='tstring_content'>Check Boxes</span><span class='tstring_end'>&quot;</span></span><span class='comma'>,</span> <span class='const'>ChoiceAnswer</span><span class='op'>::</span><span class='const'>CHECKBOX</span><span class='rbracket'>]</span><span class='rbracket'>]</span><span class='comma'>,</span> <span class='symbol'>:selected</span> <span class='op'>=&gt;</span> <span class='id identifier rubyid_default'>default</span><span class='rparen'>)</span>
+<span class='kw'>end</span></pre>
+    </td>
+  </tr>
+</table>
+</div>
+    
+  </div>
+
+</div>
+
+    <div id="footer">
+  Generated by
+  <a href="http://yardoc.org" title="Yay! A Ruby Documentation Tool" target="_parent">yard</a>
+  0.8.3 (ruby-1.9.3).
+</div>
+
+  </body>
+</html>
