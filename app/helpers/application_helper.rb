@@ -58,4 +58,12 @@ module ApplicationHelper
 
     link_to title.html_safe, {:sort => column, :direction => direction}
   end
+
+  def get_reporting_link(survey, version)
+    link_to image_tag('report.png', :alt=>"view reports"), reporting_survey_survey_version_path(:id => version.id, :survey_id => survey.id) if version && version.reporters.count > 0 && version.survey_responses.count > 0
+  end
+
+  def pdf?
+    params[:action] == 'pdf'
+  end
 end

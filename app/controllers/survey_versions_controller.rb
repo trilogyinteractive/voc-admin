@@ -1,8 +1,10 @@
 # @author Communication Training Analysis Corporation <info@ctacorp.com>
 #
 # Manages the SurveyVersion lifecycle.
+
 class SurveyVersionsController < ApplicationController
   before_filter :get_survey
+  include AkamaiUtilities
 
   # GET    /surveys/:survey_id/survey_versions(.:format)
   def index
@@ -28,7 +30,7 @@ class SurveyVersionsController < ApplicationController
   # GET    /surveys/:survey_id/survey_versions/:id/edit(.:format)
   def edit
     redirect_to surveys_path, :flash => {:notice => "The survey you are trying to access has been removed"} if @survey.archived || @survey_version.archived
-    redirect_to survey_survey_versions_path(@survey), :flash => {:notice => "You may not edit a survey once it has been published.  Please create a new version if you wish to make changes to this survey"} if @survey_version.locked
+    redirect_to survey_survey_versions_path(@survey), :flash => {:notice => "You may not edit a survey once it has been published.  Please create a new version if you wish to make changes to this survey"} if @survey_version.locked? && !@survey_version.published?
   end
 
   # GET    /surveys/:survey_id/survey_versions/:id/edit_thank_you_page(.:format)
@@ -69,14 +71,19 @@ class SurveyVersionsController < ApplicationController
     else
       @survey_version.publish_me
       Rails.cache.clear if Rails.cache
-      redirect_to survey_survey_versions_path(@survey), :notice => "Successfully published survey version."
+      if flush_akamai(@survey.id, @survey_version.version_number)
+        msg = "Successfully published survey and cache will be purged in 7 minutes."
+      else
+        msg = "Successfully published survey but there was a problem purging cache."
+      end
+      redirect_to survey_survey_versions_path(@survey), :notice => msg
     end
   end
 
   # GET    /surveys/:survey_id/survey_versions/:id/unpublish(.:format)
   def unpublish
     @survey_version.unpublish_me
-    redirect_to survey_survey_versions_path(@survey), :notice => "Successfully unpublished survey version"
+    redirect_to survey_survey_versions_path(@survey), :notice => "Successfully unpublished survey version and cache will be purged in 15 minutes."
   end
 
   # GET    /surveys/:survey_id/survey_versions/:id/clone_version(.:format)
@@ -84,6 +91,25 @@ class SurveyVersionsController < ApplicationController
     @minor_version = @survey_version.clone_me
 
     redirect_to survey_survey_versions_path(@survey), :notice => "Successfully cloned new minor version"
+  end
+
+  # GET    /surveys/:survey_id/survey_versions/:id/reporting(.:format)
+  def reporting
+    @first_count_date = @survey_version.survey_version_counts.where("visits > 0").minimum(:count_date)
+    @response_count = @survey_version.survey_responses.where("created_at >= ?", @first_count_date).count
+    @response_rate = 0
+    if @survey_version.total_visit_count > 0
+      @response_rate = @response_count * 100.0 / @survey_version.total_visit_count
+    end
+    @question_skip_rate = 0
+    if @survey_version.total_questions_asked > 0
+      @question_skip_rate = @survey_version.total_questions_skipped * 100.0 / @survey_version.total_questions_asked
+    end
+
+    if @survey_version.dirty_reports?
+      flash.now[:error] = "The survey version has been edited.  Reports and Dashboards for this survey
+        version may not be accurate until the next report generation is completed."
+    end
   end
 
   private

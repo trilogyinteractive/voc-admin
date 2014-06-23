@@ -1,4 +1,5 @@
 require 'spec_helper'
+include SurveyHelpers
 
 describe SurveyVersion do
   before(:each) do
@@ -22,6 +23,13 @@ describe SurveyVersion do
     @version.survey.should_receive(:touch)
     @version.minor = 4
     @version.save!
+  end
+
+  context "mark_reports_dirty!" do
+    it "should set dirty_reports to true" do
+      @version.mark_reports_dirty!
+      @version.dirty_reports?.should == true
+    end
   end
 
   context "scope tests" do
@@ -114,7 +122,7 @@ describe SurveyVersion do
 
     it "should return a source array to be used in rule creation" do
       sources = @version.sources
-      
+
       sources.should have(3).Array
       sources.each do |s|
         s.should have(2).String
@@ -133,10 +141,29 @@ describe SurveyVersion do
         o.should have(2).String
         o.second.should match(/\d+/)
       end
-      
+
       options.first.first.should match(/Rspec Choice Question response/)
       options.second.first.should match(/Rspec Text Question response/)
       options.third.first.should match(/Matrix Question 1: Row 1 response/)
+    end
+  end
+
+  context "visit count" do
+    before do
+      @version.temp_visit_count.incr(5.days.ago.strftime("%Y-%m-%d"), 3)
+      5.times {@version.increment_temp_visit_count}
+    end
+
+    it "should increment the temporary version count" do
+      @version.total_temp_visit_count.should == 8
+    end
+
+    it "should create survey visit counts and decrement the temporary count" do
+      @version.update_visit_counts
+      @version.total_temp_visit_count.should == 0
+      @version.temp_visit_count.count.should == 1 # should delete old temp_visit_count keys
+      @version.survey_version_counts.visit_count_for_date_range(1.day.ago, Time.now).should == 5
+      @version.survey_version_counts.visit_count_for_date_range(6.days.ago, Time.now).should == 8
     end
   end
 
@@ -210,7 +237,7 @@ describe SurveyVersion do
     @matrix = MatrixQuestion.new
 
     @matrix.build_survey_element(
-      :element_order => 3, 
+      :element_order => 3,
       :survey_version => @version,
       :page => @page
     )

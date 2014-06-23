@@ -21,7 +21,7 @@ function show_next_page(page){
 		$("#page_"+ next_page).show();
 		window.location.hash="PAGE_" + next_page;
 	} else {
-		alert('Please answer all required questions before moving on to the next page.');
+		alert(survey_required_fields_error);
 	}
 
 }
@@ -55,7 +55,7 @@ function check_for_unanswered_required(page) {
 					required =  true;
 				} else if( $(".question_" + question_number + "_answer").attr('type') == "text" && $(".question_" + question_number + "_answer").val() == "") {
 					required =  true;
-				} else if( $(".question_" + question_number + "_answer").attr('type') == "textarea" && $(".question_" + question_number + "_answer").val() == "") {
+				} else if( $(".question_" + question_number + "_answer").prop('tagName').toLowerCase() == "textarea" && $(".question_" + question_number + "_answer").val() == "") {
 					required =  true;
 				}
 			}
@@ -67,7 +67,7 @@ function validate_before_submit(page){
 	if (!check_for_unanswered_required(page)){
 		return true;
 	} else {
-		alert('Please answer all required questions before moving on to the next page.');
+		alert(survey_required_fields_error);
 		return false;
 	}
 

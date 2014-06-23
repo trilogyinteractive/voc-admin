@@ -5,6 +5,10 @@ require 'csv'
 # A SurveyVersion is a working copy of a survey.  Only one version may be published (and
 # therefore collecting responses from the public site application) at a time.
 class SurveyVersion < ActiveRecord::Base
+  include Redis::Objects
+  include ResqueAsyncRunner
+  @queue = :voc_csv
+
   belongs_to :survey, :touch => true
   has_many :pages,           :dependent => :destroy
   has_many :survey_elements, :dependent => :destroy
@@ -19,6 +23,10 @@ class SurveyVersion < ActiveRecord::Base
   has_many :survey_responses, :dependent => :destroy
   has_many :custom_views,     :dependent => :destroy
 
+  has_many :dashboards,       :dependent => :destroy
+  has_many :reports,          :dependent => :destroy
+  has_many :survey_version_counts,    :dependent => :destroy
+
   attr_accessible :major, :minor, :notes, :survey_attributes, :version_number, :survey, :thank_you_page
 
   accepts_nested_attributes_for :survey
@@ -31,6 +39,7 @@ class SurveyVersion < ActiveRecord::Base
   # Scopes for partitioning survey versions
   scope :published, where(:published => true)
   scope :unpublished, where(:published => false)
+  scope :locked, where(:locked => true)
 
   # these need updated to make sure the survey hasn't been archved
   scope :get_archived, where(:archived => true)
@@ -39,65 +48,127 @@ class SurveyVersion < ActiveRecord::Base
   # Add methods to access the name and description of a survey from a version instance
   delegate :name, :description, :to => :survey, :prefix => true
 
-  # Create a CSV export of the survey responses and notify the requesting user by email
-  # when the export has completed and is available for download.
-  #
-  # All search parameters, filters, and custom view options are respected in the export.
-  #
-  # @param [Hash] filter_params parameters for filtering the survey responses (Advanced Search, Simple Search, Custom Views)
-  # @param [Integer] user_id ID for the user requesting the export
+  hash_key :temp_visit_count
+  hash_key :temp_invitation_count
+  hash_key :temp_invitation_accepted_count
+
+  def increment_temp_visit_count
+    temp_visit_count.incr(today_string, 1)
+  end
+
+  def increment_temp_invitation_count
+    temp_invitation_count.incr(today_string, 1)
+  end
+
+  def increment_temp_invitation_accepted_count
+    temp_invitation_accepted_count.incr(today_string, 1)
+  end
+
+  def total_temp_visit_count
+    @total_temp_visit_count ||= temp_visit_count.values.inject(0) {|result, element| result + element.to_i}
+  end
+
+  def total_temp_invitation_count
+    @total_temp_invitation_count ||= temp_invitation_count.values.inject(0) {|result, element| result + element.to_i}
+  end
+
+  def total_temp_invitation_accepted_count
+    @total_temp_invitation_accepted_count ||= temp_invitation_accepted_count.values.inject(0) {|result, element| result + element.to_i}
+  end
+
+  def total_visit_count
+    @total_visit_count ||= survey_version_counts.sum(:visits) + total_temp_visit_count
+  end
+
+  def total_invitation_count
+    @total_invitation_count ||= survey_version_counts.sum(:invitations) + total_temp_invitation_count
+  end
+
+  def total_invitation_accepted_count
+    @total_invitation_accepted_count ||= survey_version_counts.sum(:invitations_accepted) + total_temp_invitation_accepted_count
+  end
+
+  def total_questions_asked
+    reporter ? reporter.questions_asked : 0
+  end
+
+  def total_questions_skipped
+    reporter ? reporter.questions_skipped : 0
+  end
+
+  # Update survey_version_counts
+  def update_counts
+    update_counts_for_attr(temp_visit_count, :visits)
+    update_counts_for_attr(temp_invitation_count, :invitations)
+    update_counts_for_attr(temp_invitation_accepted_count, :invitations_accepted)
+    update_attribute(:counts_updated_at, Time.now)
+  end
+
+  # Increments visits by temporary recent_visits count
+  def update_counts_for_attr(temp_count, attr_name)
+    yesterday = today - 1.day
+    temp_count.each do |date_string, count_string|
+      date = Date.parse(date_string)
+      count = count_string.to_i
+      if count > 0
+        svc = survey_version_counts.find_or_create_by_count_date(date)
+        SurveyVersionCount.update_counters svc.id, attr_name => count
+      end
+      if date < yesterday
+        temp_count.delete(date_string)
+      else
+        temp_count.incr(date_string, -count) if count > 0
+      end
+    end
+  end
+
+  NOSQL_BATCH = 1000
+
   def generate_responses_csv(filter_params, user_id)
-    survey_responses = self.survey_responses.processed
+    survey_response_query = ReportableSurveyResponse.where(survey_version_id: id)
 
-    # use the simple search
-    survey_responses = survey_responses.search(filter_params[:simple_search]) unless filter_params[:simple_search].blank?
+    unless filter_params[:simple_search].blank?
+      # TODO: come back to simple search later
+    end
 
-    # use the advanced search filters
     unless filter_params[:search].blank?
-      search = SurveyResponseSearch.new(filter_params[:search])
-
-      survey_responses = search.search(survey_responses)
+      # TODO: come back to advanced search later
     end
-    custom_view = nil
+
+    custom_view, sort_orders = nil
     if filter_params[:custom_view_id].blank?
-      custom_view = self.custom_views.find_by_default(true)
+      custom_view = custom_views.find_by_default(true)
     else
       # Use find_by_id in order to return nil if a custom view with the specified id
       # cannot be found instead of raising an error.
-      custom_view = self.custom_views.find_by_id(filter_params[:custom_view_id])
+      custom_view = custom_views.find_by_id(filter_params[:custom_view_id])
     end
 
-    # Apply the custom view to the survey responses
-    custom_view = nil
-    if filter_params[:custom_view_id].blank?
-      custom_view = self.custom_views.find_by_default(true)
-    else
-      # Use find_by_id in order to return nil if a custom view with the specified id
-      # cannot be found instead of raising an error.
-      custom_view = self.custom_views.find_by_id(filter_params[:custom_view_id])
-    end
+    # Ensures the responses are coming back in the proper order before batching
+    ordered_columns = custom_view.ordered_display_fields if custom_view.present?
+    ordered_columns ||= display_fields.order(:display_order)
 
     # Write the survey responses to a temporary CSV file which will be used to create the
     # Export instance.  The document will be copied to the correct location by paperclip
     # when the Export instance is created.
-    file_name = "#{Time.now.strftime("%Y%m%d%H%M")}-#{self.survey.name[0..10]}-#{self.version_number}.csv"
+    file_name = "#{Time.now.strftime("%Y%m%d%H%M")}-#{survey.name[0..10]}-#{version_number}.csv"
     CSV.open("#{Rails.root}/tmp/#{file_name}", "wb") do |csv|
+      csv << ["Date", "Page URL"].concat(ordered_columns.map(&:name))
 
-      unless custom_view.present?
-        display_field_headers = self.display_fields.order("display_order asc").map(&:name)
-      else
-        display_field_headers = custom_view.ordered_display_fields.map(&:name)
-      end
-      csv << ["Date", "Page URL"].concat(display_field_headers)
+      # For each response in batches...
+      0.step(survey_response_query.count, SurveyVersion::NOSQL_BATCH) do |offset|
+        survey_response_query.limit(SurveyVersion::NOSQL_BATCH).skip(offset).each do |response|
 
-      survey_responses.find_in_batches do |responses|
-        responses.each do |response|
-          if custom_view.present?
-            response_record = response.display_field_values.where(:display_field_id => custom_view.ordered_display_fields.map(&:id)).includes(:display_field => :display_field_custom_views).order('display_field_custom_views.display_order ASC').map {|dfv| dfv.value.blank? ? '' : dfv.value.gsub("{%delim%}", ", ")}
-          else
-            response_record = response.display_field_values.includes(:display_field).order("display_fields.display_order asc").map {|dfv| dfv.value.blank? ? '' : dfv.value.gsub("{%delim%}", ", ")}
-          end
+          # For each column we're looking to export...
+          response_record = ordered_columns.map do |df|
 
+            # Ask for the answer keyed on DisplayField id, fall back on default
+            response_answer = response.answers[df.id.to_s].presence || df.default_value.to_s
+
+            # Pass the entire array through a filter to break up multiple selection answers when done
+          end.map! {|rr| rr.gsub("{%delim%}", ", ")}
+
+          # Write the completed row to the CSV
           csv << [response.created_at, response.page_url].concat(response_record)
         end
       end
@@ -107,7 +178,13 @@ class SurveyVersion < ActiveRecord::Base
 
     # Notify the user that the export has been successful and is available for download
     if export_file.persisted?
-      ExportMailer.delay.export_download(User.find(user_id).email, export_file.id)
+      resque_args = User.find(user_id).email, export_file.id
+
+      begin
+        Resque.enqueue(ExportMailer, *resque_args)
+      rescue
+        ResquedJob.create(class_name: "ExportMailer", job_arguments: resque_args)
+      end
     end
 
     # Remove the temporary file used to create this export
@@ -199,6 +276,7 @@ class SurveyVersion < ActiveRecord::Base
     self.published = false
     self.save
   end
+                                                                                               
 
   # Clone all elements of the SurveyVersion into a new minor version.
   #
@@ -232,22 +310,112 @@ class SurveyVersion < ActiveRecord::Base
       new_sv
     end
   end
+
+  def reporter
+    @reporter ||= SurveyVersionReporter.where(:sv_id => id).first
+  end
+
+  def reporters
+    @reporters ||= reporter ? reporter.question_reporters : []
+  end
+
+  def reload_reporters
+    reporter.destroy
+    @reporter = SurveyVersionReporter.find_or_create_reporter(id)
+    reporter.update_reporter!
+  end
+
+  # generates a hash of page data that looks like
+  # {
+  #   345 => {
+  #     :page_id => 345,
+  #     :page_number => 1,
+  #     :next_page_id => 346,
+  #     :questions => [
+  #       {
+  #         :qc_id => 730,
+  #         :questionable_type => "ChoiceQuestion",
+  #         :questionable_id => 5,
+  #         :flow_control => true,
+  #         :flow_map => {
+  #           "2013" => 346,
+  #           "2014" => 348
+  #         }
+  #       }
+  #     ]
+  #   }
+  # }
+  def page_hash
+    return @page_hash if @page_hash
+    @page_hash = {}
+    pages.each do |page|
+      questions = []
+      page.survey_elements.questions.each do |element|
+        element.assetable.reload # for some reason this is necessary to get some question content
+        if element.assetable_type == "MatrixQuestion"
+          element.assetable.choice_questions.each {|cq| questions << question_hash(cq, true)}
+        else
+          questions << question_hash(element.assetable)
+        end
+      end
+      @page_hash[page.id] = {page_id: page.id, page_number: page.page_number, next_page_id: page.next_page.try(:id), questions: questions}
+    end
+    @page_hash
+  end
+
+  def mark_reports_dirty!
+    update_attribute :dirty_reports, true
+  end
+
+  def mark_reports_clean!
+    update_attribute :dirty_reports, false
+  end
+
+  def run_rules_for_display_field(display_field)
+    rules.includes(:actions).where(actions: { display_field_id: display_field.id })
+        .each do |rule|
+      puts "*"*100
+      puts "Starting job for rule: #{rule.id}"
+      puts "*"*100
+      RuleJob.create id: rule.id
+    end
+  end
+
+  private
+
+  # hash of question used by pages_for_survey_version
+  def question_hash(question, matrix_question = false)
+    qc = question.question_content
+    questionable_type = matrix_question ? "MatrixChoiceQuestion" : qc.questionable_type
+    hash = {qc_id: qc.id, questionable_type: questionable_type, questionable_id: qc.questionable_id, flow_control: qc.flow_control?}
+    if qc.flow_control?
+      hash[:flow_map] = Hash[question.choice_answers.map {|ca| [ca.id.to_s, ca.next_page_id]}]
+    end
+    hash
+  end
+
+  def today
+    Time.now.in_time_zone("Eastern Time (US & Canada)").to_date
+  end
+
+  def today_string
+    today.strftime("%Y-%m-%d")
+  end
 end
 
 # == Schema Information
 #
 # Table name: survey_versions
 #
-#  id             :integer(4)      not null, primary key
-#  survey_id      :integer(4)      not null
-#  major          :integer(4)
-#  minor          :integer(4)
-#  published      :boolean(1)      default(FALSE)
-#  locked         :boolean(1)      default(FALSE)
-#  archived       :boolean(1)      default(FALSE)
-#  notes          :text
-#  created_at     :datetime
-#  updated_at     :datetime
-#  thank_you_page :text
-#
-
+#  id                :integer(4)      not null, primary key
+#  survey_id         :integer(4)      not null
+#  major             :integer(4)
+#  minor             :integer(4)
+#  published         :boolean(1)      default(FALSE)
+#  locked            :boolean(1)      default(FALSE)
+#  archived          :boolean(1)      default(FALSE)
+#  notes             :text
+#  counts_updated_at :datetime
+#  created_at        :datetime
+#  updated_at        :datetime
+#  thank_you_page    :text

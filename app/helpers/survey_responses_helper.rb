@@ -4,7 +4,7 @@
 module SurveyResponsesHelper
 
   # Adds sort arrow images to table DisplayField columns.
-  # 
+  #
   # @param [String] column the name of the column being sorted
   # @param [String] title optional alternate display text for the column
   # @return [String] HTML link for the column header text, with sort toggle information
@@ -30,7 +30,7 @@ module SurveyResponsesHelper
   end
 
   # Retrieve the edit link for the current CustomView (or static text if no CustomView.)
-  # 
+  #
   # @param [SurveyVersion] version the current survey version
   # @param [CustomView, nil] current_view the current custom view, if applicable
   # @return [String] HTML link for the edit link
@@ -40,6 +40,19 @@ module SurveyResponsesHelper
     edit_link = link_to edit_link, edit_survey_survey_version_custom_view_path(version.survey, version, current_view), {:class => "manage"} unless current_view.nil?
 
     edit_link
+  end
+
+  # Retrieve the delete link for the current CustomView (or static text if no CustomView.)
+  #
+  # @param [SurveyVersion] version the current survey version
+  # @param [CustomView, nil] current_view the current custom view, if applicable
+  # @return [String] HTML link for the delete link
+  def get_delete_current_view_link version, current_view
+    delete_link = "Delete Current View"
+    delete_link = link_to delete_link, survey_survey_version_custom_view_path(
+      version.survey, version, current_view), {:class => "manage",
+      :method => "delete"} unless current_view.nil?
+    delete_link
   end
 
   # Generates HTML option tags for an Include/Exclude dropdown.
@@ -77,5 +90,41 @@ module SurveyResponsesHelper
     else
       answer_values
     end
+  end
+
+  def previous_survey_response_link
+    return unless @survey_responses.try(:size) > 0 && current_survey_response_location
+    if current_survey_response_location == 0
+      if @survey_responses.first_page?
+        return
+      else
+        new_id = 'previous_page'
+      end
+    else
+      new_id = @survey_responses[current_survey_response_location - 1].id
+    end
+    previous_path = edit_survey_response_path(new_id, {:survey_id => params[:survey_id]}.merge(params.slice(*SurveyResponsesController::POST_PARAMS)))
+    link_to "Previous", previous_path
+  end
+
+  def next_survey_response_link
+    return unless @survey_responses.try(:size) > 0 && current_survey_response_location
+    if current_survey_response_location == @survey_responses.size - 1
+      if @survey_responses.last_page?
+        return
+      else
+        new_id = 'next_page'
+      end
+    else
+      new_id = @survey_responses[current_survey_response_location + 1].id
+    end
+    next_path = edit_survey_response_path(new_id, {:survey_id => params[:survey_id]}.merge(params.slice(*SurveyResponsesController::POST_PARAMS)))
+    link_to "Next", next_path
+  end
+
+  private
+
+  def current_survey_response_location
+    @current_survey_response_location ||= @survey_responses.index {|sr| sr.id.to_s == params[:id].to_s}
   end
 end

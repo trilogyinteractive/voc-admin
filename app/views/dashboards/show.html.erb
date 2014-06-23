@@ -1,0 +1,46 @@
+<% unless pdf? %>
+  <h1>View Dashboard</h1>
+  <%= flash_messages(flash) %>
+  <%= render 'show_page_nav' %>
+<% end %>
+
+<div id="showpage" class="report-page">
+  <div class="left_side">
+    Survey:
+  </div>
+  <div class="right_side">
+    <p class="blue"><%= @survey.name.titleize %></p>
+  </div>
+  <br />
+  <div class="left_side">
+    Version:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @survey_version.version_number%></p>
+  </div>
+  <br />
+  <div class="left_side">
+    Dashboard Name:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @dashboard.name %></p>
+  </div>
+  <br />
+  <div class="left_side">
+    Start Date:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @dashboard.start_date_str %></p>
+  </div>
+  <br />
+  <div class="left_side">
+    End Date:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @dashboard.end_date_str %></p>
+  </div>
+  <br />
+  <%= render partial: "dashboard_elements", locals: { dashboard_elements: @dashboard.dashboard_elements } %>
+</div>
+
+<%= render 'show_page_nav' unless pdf? %>

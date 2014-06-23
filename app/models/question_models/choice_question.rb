@@ -14,7 +14,7 @@ class ChoiceQuestion < ActiveRecord::Base
   validates :answer_type, :presence => true
   validates :question_content, :presence => true
   validate :must_have_at_least_one_choice_answer
-  validate :only_one_default_answer, :if => Proc.new {|obj| obj.answer_type == "radio" || obj.answer_type == "dropdown"}
+  validate :only_one_default_answer, :unless => Proc.new { |obj| obj.allows_multiple_selection }
 
   attr_accessible :answer_type, :question_content_attributes, :survey_element_attributes, :choice_answers_attributes, :clone_of_id, :choice_answers, :auto_next_page, :display_results, :answer_placement
 
@@ -22,8 +22,10 @@ class ChoiceQuestion < ActiveRecord::Base
   accepts_nested_attributes_for :survey_element
   accepts_nested_attributes_for :choice_answers, :allow_destroy => true, :reject_if => proc { |obj| obj['answer'].blank? }
 
-  delegate :statement, :required, :flow_control, :flow_control?, :to => :question_content
+  delegate :statement, :required, :flow_control, :flow_control?, :display_fields,
+    :to => :question_content
 
+  # Stored in answer_placement
   # Lays the ChoiceAnswer options out vertically.
   HORIZONTAL_PLACEMENT = false
   # Lays the ChoiceAnswer options out from left to right.
@@ -37,15 +39,15 @@ class ChoiceQuestion < ActiveRecord::Base
 
   # If this is a standalone ChoiceQuestion, the contained SurveyElement will refer to the SurveyVersion; if part
   # of a MatrixQuestion, the parent MatrixQuestion will be the source for the SurveyVersion reference.
-  # 
+  #
   # @return [SurveyVersion] the SurveyVersion by association
   def survey_version
-    self.survey_element.nil? ? self.matrix_question.survey_version : self.survey_element.survey_version
+    self.survey_element.nil? ? self.matrix_question.try(:survey_version) : self.survey_element.try(:survey_version)
   end
 
   # Looks up from the DB and composes a safetied string of ChoiceAnswer values.
   # Used for checkbox ChoiceQuestions.
-  # 
+  #
   # @param [String] answer_string a comma-delimited string of ChoiceAnswer ids
   # @return [String] a custom-delimited string of ChoiceAnswer.answer field values
   def get_true_value(answer_string)
@@ -53,7 +55,7 @@ class ChoiceQuestion < ActiveRecord::Base
   end
 
   # Used by Criteria in Rules to process survey_responses against Conditionals
-  # 
+  #
   # @param [SurveyResponse] survey_response a SurveyResponse to test
   # @param [Integer] conditional_id the operator used to test
   # @param [Object] test_value the value to test
@@ -67,7 +69,7 @@ class ChoiceQuestion < ActiveRecord::Base
   end
 
   # Makes a deep copy of the ChoiceQuestion (when cloning a Page)
-  # 
+  #
   # @param [SurveyVersion] target_sv the SurveyVersion destination
   # @return [ChoiceQuestion] the cloned ChoiceQuestion
   def clone_me(target_sv)
@@ -104,7 +106,7 @@ class ChoiceQuestion < ActiveRecord::Base
   end
 
   # Makes a deep copy of the ChoiceQuestion (when cloning a page)
-  # 
+  #
   # @param [Page] page the page to be cloned onto
   # @return [ChoiceQuestion] the cloned copy
   def copy_to_page(page)
@@ -138,6 +140,14 @@ class ChoiceQuestion < ActiveRecord::Base
                              :clone_of_id => nil))
   end
 
+  def reporter
+    SurveyVersionReporter.find_choice_question_reporter(self)
+  end
+
+  def allows_multiple_selection
+    ["checkbox", "multiselect"].include?(answer_type)
+  end
+
   private
   # Validation to ensure that a ChoiceQuestion is not created without at least one ChoiceAnswer.
   def must_have_at_least_one_choice_answer
@@ -148,6 +158,7 @@ class ChoiceQuestion < ActiveRecord::Base
   def only_one_default_answer
     errors.add_to_base("#{answer_type.titlecase} style questions can have only one default answer") if self.choice_answers.select(&:is_default).count > 1
   end
+
 end
 
 # == Schema Information
@@ -163,3 +174,4 @@ end
 #  clone_of_id        :integer(4)
 #  auto_next_page     :boolean(1)
 #  display_results    :boolean(1)
+#  answer_placement   :integer(4)

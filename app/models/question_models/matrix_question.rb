@@ -4,7 +4,7 @@
 class MatrixQuestion < ActiveRecord::Base
   has_one :survey_element, :as => :assetable, :dependent => :destroy
   has_one :question_content, :as => :questionable, :dependent => :destroy
-  has_many :choice_questions
+  has_many :choice_questions, :dependent => :destroy
   belongs_to :survey_version
 
   validates :question_content, :presence => true
@@ -149,6 +149,10 @@ class MatrixQuestion < ActiveRecord::Base
   def remove_deleted_sub_questions(choice_questions)
     to_be_removed = choice_questions.select {|k, value| value[:question_content_attributes][:_destroy] == "1" }
     to_be_removed.each {|key, choice_question_params| remove_sub_question_display_field_and_rules(choice_question_params)}
+  end
+
+  def reporter
+    nil
   end
 
   private

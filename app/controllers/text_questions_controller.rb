@@ -17,6 +17,7 @@ class TextQuestionsController < ApplicationController
   # GET    /surveys/:survey_id/survey_versions/:survey_version_id/text_questions/new(.:format)
   def new
     @text_question = @survey_version.text_questions.build
+    @page = Page.find_by_id(params[:page_id])
     respond_to do |format|
       format.html #
       format.js
@@ -54,7 +55,8 @@ class TextQuestionsController < ApplicationController
 
     respond_to do |format|
       if @text_question.update_attributes(params[:text_question])
-        format.html {redirect_to survey_path(@survey_version.survey), :notice => "Successfully added text question."}
+        @survey_version.mark_reports_dirty! if @survey_version.published?
+        format.html {redirect_to survey_path(@survey_version.survey), :notice => "Successfully updated text question."}
       else
         format.html {render :action => 'edit'}
       end
@@ -71,7 +73,7 @@ class TextQuestionsController < ApplicationController
     @text_question.destroy
 
     respond_to do |format|
-      format.html { redirect_to text_questions_url, :notice => "Successfully deleted text question."}
+      format.html { redirect_to survey_path(@survey_version.survey), :notice => "Successfully deleted text question."}
       format.js { render :partial => "shared/element_destroy" }
     end
   end

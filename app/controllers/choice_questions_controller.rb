@@ -7,7 +7,7 @@ class ChoiceQuestionsController < ApplicationController
   # GET    /surveys/:survey_id/survey_versions/:survey_version_id/choice_questions/new(.:format)
   def new
     @choice_question = @survey_version.choice_questions.build
-    
+    @page = Page.find_by_id(params[:page_id])
     build_default_choice_context(@choice_question)
 
     respond_to do |format|
@@ -48,6 +48,7 @@ class ChoiceQuestionsController < ApplicationController
     @choice_question = ChoiceQuestion.find(params[:id])
     respond_to do |format|
       if @choice_question.update_attributes(params[:choice_question])
+        @survey_version.mark_reports_dirty! if @survey_version.published?
         format.html {redirect_to survey_path(@survey_version.survey), :notice => "Successfully updated choice question."}
       else
         format.html {render :action => 'edit'}
@@ -72,7 +73,7 @@ class ChoiceQuestionsController < ApplicationController
   end
 
   private
-  
+
   # Clean up when destroying a ChoiceQuestion.
   def destroy_default_rule_and_display_field(choice_question)
     rule = @survey_version.rules.find_by_name(choice_question.question_content.statement)

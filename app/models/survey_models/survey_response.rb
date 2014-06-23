@@ -7,6 +7,8 @@
 # the SurveyResponse links to the RawResponses, which are the historical
 # and unedited responses as entered by the survey taker.
 class SurveyResponse < ActiveRecord::Base
+  include ResqueAsyncRunner
+  @queue = :voc_responses
 
   has_many :raw_responses, :dependent => :destroy
   has_many :display_field_values
@@ -16,7 +18,7 @@ class SurveyResponse < ActiveRecord::Base
 
   default_scope where(:archived => false)
 
-  accepts_nested_attributes_for :raw_responses, :reject_if => lambda {|attr| attr['answer'].blank?}
+  accepts_nested_attributes_for :raw_responses, :reject_if => :invalid_raw_response?
   accepts_nested_attributes_for :display_field_values
 
   after_create :queue_for_processing
@@ -25,6 +27,12 @@ class SurveyResponse < ActiveRecord::Base
   scope :search, (lambda do |search_text = ""|
     joins('INNER JOIN (select * from display_field_values) t1 on t1.survey_response_id = survey_responses.id')
     .where("t1.value LIKE ? ", "%#{search_text}%").select("DISTINCT survey_responses.*")
+  end)
+
+  scope :search_rr, (lambda do |qc_id, search_text = ""|
+    joins(:raw_responses)
+    .where(raw_responses: {question_content_id: qc_id})
+    .where("raw_responses.answer LIKE ?", "%#{search_text}%")
   end)
 
   # perform a fairly ugly join to accomplish the Custom View ordering,
@@ -60,18 +68,25 @@ class SurveyResponse < ActiveRecord::Base
     end
   end)
 
+  #used for alarm notifications
+  scope :created_between, lambda {|start_date, end_date| where("created_at >= ? AND created_at <= ?", start_date, end_date )}
+
   scope :processed, where(:status_id => Status::DONE)
 
   # kaminari setting
   paginates_per 10
 
-  # Create a SurveyResponse from the RawResponse.  This is used by Delayed::Job to process the
+  # Create a SurveyResponse from the RawResponse.  This is used by Resque to process the
   # survey responses asynchronously.
-  # 
+  #
   # @param [Hash] response the response parameter hash to process from the controller
   # @param [Integer] survey_version_id the id of the SurveyVersion
   def self.process_response(response, survey_version_id)
     client_id = SecureRandom.hex(64)
+
+    # Remove extraneous data from the response
+    response.slice!('page_url', 'raw_responses_attributes')
+    response['raw_responses_attributes'].try(:values).try(:each) {|rr| rr.slice!('question_content_id', 'answer')}
 
     survey_response = SurveyResponse.new ({:client_id => client_id, :survey_version_id => survey_version_id}.merge(response))
 
@@ -117,41 +132,38 @@ class SurveyResponse < ActiveRecord::Base
     sql = ActiveRecord::Base.connection();
     sql.delete("delete from new_responses where survey_response_id = #{self.id}")
     self.update_attributes(:worker_name => "", :last_processed => Time.now)
-  end
 
-  # Used by the response_parser rake task to select SurveyResponses in sequence for
-  # processing of nightly Rules.
-  # 
-  # @param [String] worker_name the worker thread name
-  # @param [Date] date last run date, i.e. now
-  # @return [nil, SurveyResponse] the next SurveyResponse to process, if applicable
-  def self.get_next_response(worker_name, mode, *date)
-      ActiveRecord::Base.transaction do
-        
-        # get next response (locking so we can stop other workers from grabbing it)
-        response = SurveyResponse.find_by_worker_name(worker_name, :lock => true)
-        
-        if mode =="new"
-          nr_id = NewResponse.next_response.first.try(:survey_response_id)
-          return(nil) unless nr_id
-          response ||= SurveyResponse.find(nr_id, :lock => true)
-        elsif mode == "nightly"
-          response ||= SurveyResponse.where("last_processed < ? ", date[0]).first
-          return(nil) unless response
-        end
-        
-        # set its status and worker
-        response.update_attributes(:status_id => Status::PROCESSING, :worker_name => worker_name)
-        
-        # return the reponse
-        response
-      end
-    end
+    # Flatten the results and export to mongo.
+    # Note: Both process_me and export_values_for_reporting may be better off being moved to
+    # after_save callbacks to ensure they run in the correct order to avoid timing issues and
+    # cleanup the code.
+    export_values_for_reporting
+  end
 
   # Mark the SurveyResponse as archived (soft deleted.)
   def archive
     self.archived = true
     self.save!
+  end
+
+  def export_values_for_reporting
+    resp = ReportableSurveyResponse.find_or_create_by(survey_response_id: self.id)
+
+    resp.survey_id = self.survey_version.survey_id
+    resp.survey_version_id = self.survey_version_id
+
+    answers = {}
+
+    self.display_field_values.each do |dfv|
+      answers[dfv.display_field_id.to_s] = dfv.value
+    end
+
+    resp.answers = answers
+
+    resp.created_at = self.created_at
+    resp.page_url = self.page_url
+
+    resp.save
   end
 
   private
@@ -166,6 +178,27 @@ class SurveyResponse < ActiveRecord::Base
       dfv = DisplayFieldValue.find_or_create_by_survey_response_id_and_display_field_id(self.id, df.id)
       dfv.update_attributes(:value => df.default_value)
     end
+  end
+
+  # question content ids associated with this survey version
+  def question_content_ids
+    return @question_content_ids unless @question_content_ids.nil?
+    @question_content_ids = survey_version.try(:questions).try(:map) do |q|
+      if q.is_a?(MatrixQuestion) # get the ids of questins associated with MatrixQuestion
+        q.choice_questions.map {|cq| cq.question_content.try(:id).to_s}
+      else
+        q.question_content.try(:id).to_s
+      end
+    end
+    @question_content_ids ||= []
+    @question_content_ids.flatten!
+    @question_content_ids.reject! {|i| i.blank?}
+    @question_content_ids
+  end
+
+  # raw response is invalid if blank or if the question_content_id isn't part of this survey version
+  def invalid_raw_response?(attr)
+    attr['answer'].blank? || !question_content_ids.detect {|i| i == attr['question_content_id']}
   end
 end
 

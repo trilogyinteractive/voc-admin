@@ -74,7 +74,11 @@ class TextQuestion < ActiveRecord::Base
                             :survey_element_attributes=>se_attribs,
                             :clone_of_id => nil
                           ))
-    end
+  end
+
+  def reporter
+    SurveyVersionReporter.find_text_question_reporter(self)
+  end
 end
 
 # == Schema Information

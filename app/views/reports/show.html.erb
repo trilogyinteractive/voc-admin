@@ -1,0 +1,86 @@
+<% unless pdf? %>
+  <% javascript 'reporting_show.js' %>
+  <h1>View Report</h1>
+  <%= flash_messages(flash) %>
+  <%= render 'show_page_nav' %>
+<% end %>
+
+<div id="showpage" class="report-page">
+  <div class="left_side">
+    Survey:
+  </div>
+  <div class="right_side">
+    <p class="blue"><%= @survey.name.titleize %></p>
+  </div>
+  <br />
+  <div class="left_side">
+    Version:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @survey_version.version_number%></p>
+  </div>
+  <br />
+  <div class="left_side">
+    Report Name:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @report.name %></p>
+  </div>
+  <br />
+  <div class="left_side">
+    Start Date:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @report.start_date_str %></p>
+  </div>
+  <br />
+  <div class="left_side">
+    End Date:
+  </div>
+  <div class="right_side">
+    <p class="version"><%= @report.end_date_str %></p>
+  </div>
+  <br />
+</div>
+
+<% if @report.text_question_reporters.count > 0 %>
+  <table>
+    <tr>
+      <th scope="col">Question</th>
+      <th scope="col">Top Words</th>
+      <% unless pdf? %>
+        <th scope="col"></th>
+      <% end %>
+    </tr>
+    <% @report.text_question_reporters.each do |tqr| %>
+      <tr class="<%= cycle('gray','white', :name => 'a') %>">
+        <td><%= tqr.question_text %></td>
+        <td><%= tqr.top_words_str(@report.start_date, @report.end_date, @report.answer_limit(10)) %></td>
+        <% unless pdf? %>
+          <td><%= link_to "CSV", question_csv_survey_survey_version_report_path(@survey, @survey_version, @report, 'text', tqr.id, 'csv') %></td>
+        <% end %>
+    <% end %>
+  </table>
+<% end %>
+
+<% if @report.choice_question_reporters.count > 0 %>
+  <table>
+    <tr>
+      <th scope="col">Question</th>
+      <th scope="col">Answers</th>
+      <% unless pdf? %>
+        <th></th>
+      <% end %>
+    </tr>
+    <% @report.choice_question_reporters.each do |cqr| %>
+      <tr class="<%= cycle('gray','white', :name => 'b') %>">
+        <td><%= cqr.question_text %></td>
+        <td><%= cqr.choice_answers_str(@report.start_date, @report.end_date, @report.answer_limit(5)) %></td>
+        <% unless pdf? %>
+          <td><%= link_to "CSV", question_csv_survey_survey_version_report_path(@survey, @survey_version, @report, 'choice', cqr.id, 'csv') %></td>
+        <% end %>
+    <% end %>
+  </table>
+<% end %>
+
+<%= render 'show_page_nav' unless pdf? %>

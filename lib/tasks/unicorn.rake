@@ -4,6 +4,7 @@ namespace :unicorn do
 
   desc "Start the unicorn server.  Use config/unicorn_config.rb if it exists."
   task :start, [:config_file] do |t, args|
+    args[:config_file] ||= ENV['UNICORN_CONFIG']
     # Default to use config file in config/unicorn_config.rb if it exists
     args.with_defaults( :config_file => "#{Rails.root}/config/unicorn_config.rb")
 
@@ -49,7 +50,7 @@ namespace :unicorn do
   # Raises ENOENT if the file doesn't exist
   def unicorn_pid
     begin
-      File.read("#{Rails.root}/tmp/pids/unicorn.pid").to_i
+      File.read(ENV['UNICORN_PID'] || "#{Rails.root}/tmp/pids/unicorn.pid").to_i
     rescue Errno::ENOENT
       raise "Unicorn doesn't seem to be running"
     end

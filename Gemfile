@@ -12,10 +12,27 @@ gem 'authlogic'
 gem 'memcache-client'
 gem 'paperclip'
 gem 'daemons', :require => false
+gem 'httparty'
+
+gem 'openam', :git => "git@bitbucket.org:ctacdevteam/ams_sso.git", :tag => '0.5.4'
+
+gem 'resque_mailer'
+gem 'resque-status'
+gem 'resque_unit', :group => :test
+ 
+gem 'bson_ext'
+gem 'escape_utils'
+gem 'mongoid'
+gem 'open_uri_redirections'
+gem "ranked-model", "~> 0.2.1"
+gem 'redis-objects'
+gem 'pdfkit'
+gem "best_in_place", :git => 'https://github.com/eLafo/best_in_place', :branch => 'rails-3.0' # This version is require for < Rails 3.1
 
 platform :ruby do
   gem 'unicorn-rails'
   gem 'mysql2', '< 0.3'
+  gem 'wkhtmltopdf-binary', "~> 0.9.9.1"
   
   group :test do
     gem 'rails_best_practices'
@@ -37,7 +54,9 @@ end
 
 group :development do
 	gem 'annotate'
-	gem 'pry-rails'
+  gem 'better_errors'
+  gem 'binding_of_caller'
+  gem 'jazz_hands'
   gem 'yard'
 end
 
@@ -51,7 +70,6 @@ group :test do
 
   gem 'guard-rspec'
   gem 'growl'
-  gem 'pry-rails'
   gem 'shoulda-matchers'
   gem 'rb-fsevent', '~> 0.9.1'
   
