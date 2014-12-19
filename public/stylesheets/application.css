@@ -881,27 +881,23 @@ fieldset fieldset.hide legend {
 
 /**** Users Table ****/
 #usersTable .col1 {
-	width: 30px;
-	text-align: center;
+  width: 30px;
+  text-align: center;
 }
 #usersTable .col2 {
-	width: 260px;
+  width: 306px;
 }
 #usersTable .col3 {
-	width: 50px;
-	text-align: center;
-	padding-right: 30px;
+  width: 50px;
+  text-align: center;
+  padding-right: 30px;
 }
 #usersTable .col4 {
-	width: 320px;
+  width: 406px;
 }
 #usersTable .col5 {
-	width: 120px;
-	text-align: center;
-}
-#usersTable .col6 {
-	width: 50px;
-	text-align: center;
+  width: 50px;
+  text-align: center;
 }
 
 /**** Site Tables ****/
