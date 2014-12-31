@@ -4,7 +4,6 @@
 
 class SurveyVersionsController < ApplicationController
   before_filter :get_survey
-  include AkamaiUtilities
 
   # GET    /surveys/:survey_id/survey_versions(.:format)
   def index
@@ -71,12 +70,7 @@ class SurveyVersionsController < ApplicationController
     else
       @survey_version.publish_me
       Rails.cache.clear if Rails.cache
-      # Commenting out flush_akamai call since we don't use it
-      #if flush_akamai(@survey.id, @survey_version.version_number)
-      # msg = "Successfully published survey and cache will be purged in 7 minutes."
-      #else
-        msg = "Successfully published survey but there was a problem purging cache."
-      #end
+      msg = "Successfully published survey."
       redirect_to survey_survey_versions_path(@survey), :notice => msg
     end
   end
